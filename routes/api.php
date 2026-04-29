@@ -20,11 +20,21 @@ Route::get("/sample", function () {
     ]);
 });
 
+// Public authentication routes
+Route::post("/register", [AuthController::class, "register"]);
 Route::post("/login", [AuthController::class, "login"]);
-Route::get("/home", [UserController::class,"index"]);
-Route::get("/new-record", [UserController::class,"store"]);
 
+// Protected routes
 Route::middleware('auth:sanctum')->group(function () {
+    // Authentication
+    Route::post("/logout", [AuthController::class, "logout"]);
+    Route::get("/profile", [AuthController::class, "profile"]);
+    
+    // Resources
     Route::apiResource('plants', PlantController::class);
     Route::apiResource('users', UserController::class);
+    
+    // Legacy endpoints
+    Route::get("/home", [UserController::class,"index"]);
+    Route::get("/new-record", [UserController::class,"store"]);
 });
