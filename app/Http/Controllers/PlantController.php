@@ -12,10 +12,23 @@ class PlantController extends Controller
   /**
    * Display a listing of the resource.
    */
-  public function index()
+  public function index(Request $request)
   {
-    //TODO : implement load all the records
-    //TODO : implement pagination when loading all the records
+    $perPage = $request->query('per_page', 15);
+    $perPage = min($perPage, 100); // Limit max to 100 per page
+
+    $plants = PlantModel::paginate($perPage);
+
+    return response()->json([
+      'data' => $plants->items(),
+      'pagination' => [
+        'total' => $plants->total(),
+        'per_page' => $plants->perPage(),
+        'current_page' => $plants->currentPage(),
+        'last_page' => $plants->lastPage(),
+        'has_more' => $plants->hasMorePages(),
+      ]
+    ]);
   }
 
   /**
@@ -71,9 +84,43 @@ class PlantController extends Controller
   /**
    * Update the specified resource in storage.
    */
-  public function update(Request $request, PlantModel $plantController)
+  public function update(Request $request, PlantModel $plant)
   {
-    //TODO : implement update record functionality
+    try {
+      // Validate the incoming request
+      $validated = $request->validate([
+        'name' => 'sometimes|required|string|max:255',
+        'variety' => 'sometimes|required|string|max:255',
+        'notes' => 'nullable|string',
+        'date_planted' => 'sometimes|required|date',
+        'seedling_count' => 'sometimes|required|integer|min:1',
+        'batch_name' => 'sometimes|required|string|max:255',
+        'starting_fund' => 'sometimes|required|numeric|min:0',
+        'seedling_source' => 'sometimes|required|string|max:255',
+      ]);
+
+      // Update the plant record
+      $plant->update($validated);
+
+      // Return success response with the updated plant
+      return response()->json([
+        'message' => 'Plant record updated successfully',
+        'data' => $plant,
+      ], 200);
+
+    } catch (ValidationException $e) {
+      // Return validation errors
+      return response()->json([
+        'message' => 'Validation failed',
+        'errors' => $e->errors(),
+      ], 422);
+    } catch (\Exception $e) {
+      // Return error response
+      return response()->json([
+        'message' => 'Failed to update plant record',
+        'error' => $e->getMessage(),
+      ], 500);
+    }
   }
 
   /**
@@ -81,6 +128,22 @@ class PlantController extends Controller
    */
   public function destroy(PlantModel $plant)
   {
-    //TODO : implement delete record functionality
+    try {
+      // Delete the plant record
+      $plant->delete();
+
+      // Return success response
+      return response()->json([
+        'message' => 'Plant record deleted successfully',
+        'data' => $plant,
+      ], 200);
+
+    } catch (\Exception $e) {
+      // Return error response
+      return response()->json([
+        'message' => 'Failed to delete plant record',
+        'error' => $e->getMessage(),
+      ], 500);
+    }
   }
 }
