@@ -14,8 +14,17 @@ class PlantController extends Controller
    */
   public function index()
   {
-    //TODO : implement load all the records
-    //TODO : implement pagination when loading all the records
+    $plants = PlantModel::paginate(15);
+
+    return response()->json([
+      'data' => $plants->items(),
+      'pagination' => [
+        'total' => $plants->total(),
+        'per_page' => $plants->perPage(),
+        'current_page' => $plants->currentPage(),
+        'last_page' => $plants->lastPage(),
+      ]
+    ]);
   }
 
   /**
